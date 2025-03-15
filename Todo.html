@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Productivity Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent: #4fc3f7;
+            --light: #f5f5f5;
+            --dark: #333;
+            --danger: #e53935;
+            --success: #43a047;
+            --warning: #ffb300;
+            
+            /* Light mode colors (default) */
+            --bg-color: #f0f2f5;
+            --widget-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #eeeeee;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Dark mode colors */
+        .dark-mode {
+            --bg-color: #121212;
+            --widget-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #333333;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: auto;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto 20px auto;
+        }
+        
+        .widget {
+            background: var(--widget-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            padding: 15px;
+            overflow: hidden;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .widget-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .widget-controls i {
+            margin-left: 8px;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s;
+        }
+        
+        .widget-controls i:hover {
+            color: var(--primary);
+        }
+        
+        /* Pomodoro Timer */
+        #pomodoro {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        .timer-display {
+            font-size: 3.5rem;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 15px 0;
+        }
+        
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .timer-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .start-btn {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .pause-btn {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .reset-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .timer-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .timer-mode {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+        
+        .mode-btn {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Task List */
+        #tasks {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+        }
+        
+        .task-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            animation: fadeIn 0.3s;
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-content {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .task-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+        }
+        
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .task-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .task-controls i {
+            cursor: pointer;
+            color: #777;
+            transition: color 0.2s;
+        }
+        
+        .task-controls i:hover {
+            color: var(--primary);
+        }
+        
+        .task-controls i.delete-task:hover {
+            color: var(--danger);
+        }
+        
+        .task-status {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+            color: white;
+        }
+        
+        .status-working {
+            background-color: var(--primary);
+        }
+        
+        .status-help {
+            background-color: var(--warning);
+        }
+        
+        .status-check {
+            background-color: var(--accent);
+        }
+        
+        .status-completed {
+            background-color: var(--success);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .task-filters {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .task-filter {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--light);
+            transition: background-color 0.2s;
+        }
+        
+        .task-filter.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .add-task {
+            display: flex;
+            margin-top: 15px;
+        }
+        
+        .add-task input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+            background-color: var(--widget-bg);
+            color: var(--text-color);
+        }
+        
+        .add-task button {
+            padding: 10px 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .add-task button:hover {
+            background-color: var(--secondary);
+        }
+        
+        /* Notes */
+        #notes {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        .notes-container {
+            display: flex;
+            flex-direction: column;
+            height: 250px;
+        }
+        
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .notes-tabs {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            max-width: 70%;
+        }
+        
+        .note-tab {
+            padding: 5px 10px;
+            background: var(--light);
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 12px;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        
+        .note-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .note-tab-close {
+            margin-left: 5px;
+            font-size: 10px;
+            visibility: hidden;
+        }
+        
+        .note-tab:hover .note-tab-close {
+            visibility: visible;
+        }
+        
+        .notes-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .notes-textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.5;
+            background-color: var(--widget-bg);
+            color: var(--text-color);
+        }
+        
+        /* Water Tracker */
+        #water {
+            grid-column: 3;
+            grid-row: 1;
+            text-align: center;
+        }
+        
+        .water-tracker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .water-progress {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .water-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #e6f7ff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #4fc3f7;
+            transition: height 0.3s;
+        }
+        
+        .water-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            z-index: 1;
+        }
+        
+        .water-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .water-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .water-btn:hover {
+            background: var(--secondary);
+        }
+        
+        /* Calendar/Agenda */
+        #calendar {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        
+        /* Bookmarks Bar */
+        .bookmarks-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 20px 20px 20px;
+        }
+        
+        .bookmarks-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 15px;
+            background: var(--widget-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            scrollbar-width: thin;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        
+        .bookmarks-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .bookmarks-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .bookmark-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+        
+        .bookmark-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .bookmark-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        
+        .bookmark-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .bookmark-title {
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        .add-bookmark {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+            cursor: pointer;
+        }
+        
+        .add-bookmark-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            border: 2px dashed #ddd;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .calendar-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .calendar-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .calendar-controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .events-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            padding: 10px;
+            border-left: 3px solid var(--primary);
+            background: #f9f9f9;
+            margin-bottom: 8px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .event-time {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .event-title {
+            font-weight: 600;
+        }
+        
+        .add-event {
+            margin-top: 10px;
+        }
+        
+        .add-event button {
+            width: 100%;
+            padding: 8px;
+            background: var(--light);
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+        
+        .add-event button:hover {
+            background: #eee;
+            color: var(--primary);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            #pomodoro, #water {
+                grid-column: auto;
+            }
+            
+            #tasks {
+                grid-column: auto;
+                grid-row: auto;
+            }
+            
+            #notes, #calendar {
+                grid-column: auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .widget {
+                grid-column: 1;
+                padding: 12px;
+            }
+            
+            .timer-display {
+                font-size: 2.5rem;
+            }
+            
+            .bookmarks-container {
+                padding: 0 15px 15px 15px;
+            }
+            
+            /* Make touch targets larger on mobile */
+            .timer-btn,
+            .mode-btn,
+            .add-task button,
+            .water-btn,
+            .add-event button {
+                padding: 10px 16px;
+                min-height: 44px;
+            }
+            
+            .task-controls i,
+            .widget-controls i {
+                font-size: 18px;
+                padding: 8px;
+            }
+            
+            /* Better handling of bookmark controls on touch devices */
+            .bookmark-item {
+                position: relative;
+                padding: 5px;
+            }
+            
+            /* Style for long press menu on mobile */
+            .bookmark-item.active .controls-wrapper {
+                opacity: 1;
+            }
+        }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            font-size: 20px;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Adjust for dark mode */
+        .dark-mode .theme-toggle {
+            background-color: #ffc107;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Pomodoro Timer -->
+        <div class="widget" id="pomodoro">
+            <div class="widget-header">
+                <h2 class="widget-title">Pomodoro Timer</h2>
+                <div class="widget-controls">
+                    <i class="fas fa-sync-alt" id="refresh-pomodoro" title="Reset"></i>
+                </div>
+            </div>
+            <div class="timer-display">25:00</div>
+            <div class="timer-mode">
+                <button class="mode-btn active" data-mode="pomodoro" data-minutes="25">Pomodoro</button>
+                <button class="mode-btn" data-mode="short" data-minutes="5">Short Break</button>
+                <button class="mode-btn" data-mode="long" data-minutes="15">Long Break</button>
+            </div>
+            <div class="timer-controls">
+                <button class="timer-btn start-btn">Start</button>
+                <button class="timer-btn pause-btn" disabled>Pause</button>
+                <button class="timer-btn reset-btn">Reset</button>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <div class="widget" id="tasks">
+            <div class="widget-header">
+                <h2 class="widget-title">Task List</h2>
+                <div class="widget-controls">
+                    <i class="fas fa-filter" title="Filter"></i>
+                    <i class="fas fa-sort" title="Sort"></i>
+                </div>
+            </div>
+            <ul class="task-list">
+                <!-- Tasks will be added dynamically -->
+            </ul>
+            <div class="add-task">
+                <input type="text" placeholder="Add a new task..." id="new-task">
+                <button id="add-task-btn">Add</button>
+            </div>
+        </div>
+
+        <!-- Quick Notes -->
+        <div class="widget" id="notes">
+            <div class="widget-header">
+                <h2 class="widget-title">Quick Notes</h2>
+                <div class="widget-controls">
+                    <i class="fas fa-save" id="save-notes" title="Save"></i>
+                    <i class="fas fa-trash" id="clear-notes" title="Clear"></i>
+                </div>
+            </div>
+            <div class="notes-container">
+                <textarea class="notes-textarea" placeholder="Type your notes here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Water Tracker -->
+        <div class="widget" id="water">
+            <div class="widget-header">
+                <h2 class="widget-title">Water Tracker</h2>
+                <div class="widget-controls">
+                    <i class="fas fa-sync-alt" id="reset-water" title="Reset"></i>
+                </div>
+            </div>
+            <div class="water-tracker">
+                <div class="water-progress">
+                    <div class="water-circle">
+                        <div class="water-fill" style="height: 0%"></div>
+                    </div>
+                    <div class="water-text">0/8</div>
+                </div>
+                <div class="water-controls">
+                    <button class="water-btn" id="add-water">Add Glass</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar/Agenda -->
+        <div class="widget" id="calendar">
+            <div class="widget-header">
+                <h2 class="widget-title">Today's Agenda</h2>
+                <div class="widget-controls">
+                    <i class="fas fa-calendar-alt" title="Full Calendar"></i>
+                </div>
+            </div>
+            <div class="calendar-header">
+                <div class="calendar-title" id="current-date">March 13, 2025</div>
+                <div class="calendar-controls">
+                    <button id="prev-day"><i class="fas fa-chevron-left"></i></button>
+                    <button id="next-day"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <ul class="events-list">
+                <!-- Events will be added dynamically -->
+            </ul>
+            <div class="add-event">
+                <button id="add-event-btn"><i class="fas fa-plus"></i> Add Event</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        <!-- Theme Toggle Button -->
+        const themeToggle = document.createElement('div');
+        themeToggle.className = 'theme-toggle';
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        document.body.appendChild(themeToggle);
+        
+        // Theme Toggle Functionality
+        function initThemeToggle() {
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('productivityDashboardTheme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                
+                if (document.body.classList.contains('dark-mode')) {
+                    localStorage.setItem('productivityDashboardTheme', 'dark');
+                    themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                } else {
+                    localStorage.setItem('productivityDashboardTheme', 'light');
+                    themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                }
+            });
+        }
+        
+        // Initialize components
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize all app components
+            initPomodoro();
+            initTaskList();
+            initNotes();
+            initWaterTracker();
+            initAgenda();
+            initThemeToggle();
+            
+            // Load saved data
+            loadStoredData();
+            
+            // Mobile touch handling for bookmarks
+            addMobileTouchHandling();
+        });
+        
+        function addMobileTouchHandling() {
+            let touchTimer;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // Add CSS for active state
+                const style = document.createElement('style');
+                style.textContent = `
+                    .bookmark-item.active .controls-wrapper {
+                        opacity: 1 !important;
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                document.addEventListener('touchstart', (e) => {
+                    const bookmarkItem = e.target.closest('.bookmark-item');
+                    if (bookmarkItem) {
+                        touchTimer = setTimeout(() => {
+                            // Activate controls on long press
+                            document.querySelectorAll('.bookmark-item').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            bookmarkItem.classList.add('active');
+                            e.preventDefault(); // Prevent normal click
+                        }, 500);
+                    }
+                }, { passive: false });
+                
+                document.addEventListener('touchend', () => {
+                    clearTimeout(touchTimer);
+                });
+                
+                document.addEventListener('touchcancel', () => {
+                    clearTimeout(touchTimer);
+                });
+                
+                // Dismiss active bookmark when tapping elsewhere
+                document.addEventListener('touchstart', (e) => {
+                    if (!e.target.closest('.bookmark-item') && !e.target.closest('.controls-wrapper')) {
+                        document.querySelectorAll('.bookmark-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                    }
+                }, { passive: true });
+            }
+        }
+        
+        // Pomodoro Timer
+        function initPomodoro() {
+            const timerDisplay = document.querySelector('.timer-display');
+            const startBtn = document.querySelector('.start-btn');
+            const pauseBtn = document.querySelector('.pause-btn');
+            const resetBtn = document.querySelector('.reset-btn');
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            const refreshBtn = document.getElementById('refresh-pomodoro');
+            
+            let timer;
+            let minutes = 25;
+            let seconds = 0;
+            let isRunning = false;
+            let currentMode = 'pomodoro';
+            
+            function updateDisplay() {
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            function startTimer() {
+                if (isRunning) return;
+                
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                timer = setInterval(() => {
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            clearInterval(timer);
+                            timerComplete();
+                            return;
+                        }
+                        minutes--;
+                        seconds = 59;
+                    } else {
+                        seconds--;
+                    }
+                    updateDisplay();
+                }, 1000);
+            }
+            
+            function pauseTimer() {
+                clearInterval(timer);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+            
+            function resetTimer() {
+                clearInterval(timer);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                
+                // Reset to the current mode's duration
+                const activeMode = document.querySelector('.mode-btn.active');
+                minutes = parseInt(activeMode.dataset.minutes);
+                seconds = 0;
+                updateDisplay();
+            }
+            
+            function timerComplete() {
+                // Play notification sound or show notification
+                alert('Time is up!');
+                resetTimer();
+            }
+            
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            refreshBtn.addEventListener('click', resetTimer);
+            
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    currentMode = btn.dataset.mode;
+                    minutes = parseInt(btn.dataset.minutes);
+                    seconds = 0;
+                    updateDisplay();
+                    
+                    // If timer is running, reset and start with new mode
+                    if (isRunning) {
+                        clearInterval(timer);
+                        startTimer();
+                    } else {
+                        resetTimer();
+                    }
+                });
+            });
+        }
+        
+        // Task List
+        function initTaskList() {
+            const taskList = document.querySelector('.task-list');
+            const newTaskInput = document.getElementById('new-task');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            
+            function createTaskElement(taskText, completed = false) {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                
+                const taskContent = document.createElement('div');
+                taskContent.className = 'task-content';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'task-checkbox';
+                checkbox.checked = completed;
+                
+                const text = document.createElement('span');
+                text.className = 'task-text';
+                if (completed) text.classList.add('completed');
+                text.textContent = taskText;
+                
+                const controls = document.createElement('div');
+                controls.className = 'task-controls';
+                
+                const editIcon = document.createElement('i');
+                editIcon.className = 'fas fa-edit';
+                editIcon.title = 'Edit';
+                
+                const deleteIcon = document.createElement('i');
+                deleteIcon.className = 'fas fa-trash delete-task';
+                deleteIcon.title = 'Delete';
+                
+                taskContent.appendChild(checkbox);
+                taskContent.appendChild(text);
+                
+                controls.appendChild(editIcon);
+                controls.appendChild(deleteIcon);
+                
+                li.appendChild(taskContent);
+                li.appendChild(controls);
+                
+                // Event listeners
+                checkbox.addEventListener('change', () => {
+                    text.classList.toggle('completed', checkbox.checked);
+                    saveTasksToStorage();
+                });
+                
+                editIcon.addEventListener('click', () => {
+                    const newText = prompt('Edit task:', text.textContent);
+                    if (newText !== null && newText.trim() !== '') {
+                        text.textContent = newText;
+                        saveTasksToStorage();
+                    }
+                });
+                
+                deleteIcon.addEventListener('click', () => {
+                    li.remove();
+                    saveTasksToStorage();
+                });
+                
+                return li;
+            }
+            
+            function addTask() {
+                const taskText = newTaskInput.value.trim();
+                if (taskText === '') return;
+                
+                const taskElement = createTaskElement(taskText);
+                taskList.appendChild(taskElement);
+                
+                newTaskInput.value = '';
+                saveTasksToStorage();
+            }
+            
+            function saveTasksToStorage() {
+                const tasks = [];
+                document.querySelectorAll('.task-item').forEach(item => {
+                    const text = item.querySelector('.task-text').textContent;
+                    const completed = item.querySelector('.task-checkbox').checked;
+                    tasks.push({ text, completed });
+                });
+                
+                localStorage.setItem('productivityDashboardTasks', JSON.stringify(tasks));
+            }
+            
+            function loadTasksFromStorage() {
+                const saved = localStorage.getItem('productivityDashboardTasks');
+                if (saved) {
+                    const tasks = JSON.parse(saved);
+                    taskList.innerHTML = '';
+                    tasks.forEach(task => {
+                        const taskElement = createTaskElement(task.text, task.completed);
+                        taskList.appendChild(taskElement);
+                    });
+                }
+            }
+            
+            addTaskBtn.addEventListener('click', addTask);
+            newTaskInput.addEventListener('keypress', e => {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            // Expose function for initial load
+            window.loadTasksFromStorage = loadTasksFromStorage;
+        }
+        
+        // Notes
+        function initNotes() {
+            const notesWidget = document.getElementById('notes');
+            const saveBtn = document.getElementById('save-notes');
+            const clearBtn = document.getElementById('clear-notes');
+            
+            // Restructure notes widget
+            const notesContainer = document.createElement('div');
+            notesContainer.className = 'notes-container';
+            
+            // Create header with tabs
+            const notesHeader = document.createElement('div');
+            notesHeader.className = 'notes-header';
+            
+            const notesTabs = document.createElement('div');
+            notesTabs.className = 'notes-tabs';
+            
+            const notesActions = document.createElement('div');
+            notesActions.className = 'notes-actions';
+            
+            const addNoteBtn = document.createElement('button');
+            addNoteBtn.innerHTML = '<i class="fas fa-plus"></i>';
+            addNoteBtn.style.border = 'none';
+            addNoteBtn.style.borderRadius = '4px';
+            addNoteBtn.style.padding = '5px 8px';
+            addNoteBtn.style.background = 'var(--primary)';
+            addNoteBtn.style.color = 'white';
+            addNoteBtn.style.cursor = 'pointer';
+            
+            notesActions.appendChild(addNoteBtn);
+            
+            notesHeader.appendChild(notesTabs);
+            notesHeader.appendChild(notesActions);
+            
+            // Create textarea
+            const textarea = document.createElement('textarea');
+            textarea.className = 'notes-textarea';
+            textarea.placeholder = 'Type your notes here...';
+            
+            notesContainer.appendChild(notesHeader);
+            notesContainer.appendChild(textarea);
+            
+            // Replace existing notes content
+            const existingHeader = notesWidget.querySelector('.widget-header');
+            notesWidget.innerHTML = '';
+            notesWidget.appendChild(existingHeader);
+            notesWidget.appendChild(notesContainer);
+            
+            // Update controls in widget header
+            const widgetControls = notesWidget.querySelector('.widget-controls');
+            widgetControls.innerHTML = '';
+            
+            const saveIcon = document.createElement('i');
+            saveIcon.className = 'fas fa-save';
+            saveIcon.id = 'save-notes';
+            saveIcon.title = 'Save';
+            
+            widgetControls.appendChild(saveIcon);
+            
+            // Variables for notes management
+            let notes = [];
+            let currentNoteIndex = 0;
+            
+            function createNoteTab(title, index) {
+                const tab = document.createElement('div');
+                tab.className = 'note-tab';
+                tab.textContent = title;
+                tab.dataset.index = index;
+                
+                if (index === currentNoteIndex) {
+                    tab.classList.add('active');
+                }
+                
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'note-tab-close';
+                closeBtn.innerHTML = '&times;';
+                
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (notes.length > 1) {
+                        deleteNote(index);
+                    } else {
+                        alert('You must have at least one note');
+                    }
+                });
+                
+                tab.appendChild(closeBtn);
+                
+                tab.addEventListener('click', () => {
+                    if (currentNoteIndex !== index) {
+                        saveCurrentNote();
+                        switchToNote(index);
+                    }
+                });
+                
+                return tab;
+            }
+            
+            function updateNoteTabs() {
+                notesTabs.innerHTML = '';
+                notes.forEach((note, index) => {
+                    const tab = createNoteTab(note.title, index);
+                    notesTabs.appendChild(tab);
+                });
+            }
+            
+            function switchToNote(index) {
+                document.querySelectorAll('.note-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                const tab = document.querySelector(`.note-tab[data-index="${index}"]`);
+                if (tab) tab.classList.add('active');
+                
+                currentNoteIndex = index;
+                textarea.value = notes[index].content;
+            }
+            
+            function saveCurrentNote() {
+                if (notes.length > 0) {
+                    notes[currentNoteIndex].content = textarea.value;
+                    localStorage.setItem('productivityDashboardNotes', JSON.stringify(notes));
+                }
+            }
+            
+            function addNewNote() {
+                saveCurrentNote();
+                
+                const title = prompt('Enter a name for your new note:', `Note ${notes.length + 1}`);
+                if (!title) return;
+                
+                notes.push({
+                    title: title,
+                    content: ''
+                });
+                
+                localStorage.setItem('productivityDashboardNotes', JSON.stringify(notes));
+                currentNoteIndex = notes.length - 1;
+                updateNoteTabs();
+                textarea.value = '';
+                textarea.focus();
+            }
+            
+            function deleteNote(index) {
+                if (notes.length <= 1) return;
+                
+                if (confirm('Are you sure you want to delete this note?')) {
+                    notes.splice(index, 1);
+                    
+                    if (currentNoteIndex >= notes.length) {
+                        currentNoteIndex = notes.length - 1;
+                    }
+                    
+                    localStorage.setItem('productivityDashboardNotes', JSON.stringify(notes));
+                    updateNoteTabs();
+                    textarea.value = notes[currentNoteIndex].content;
+                }
+            }
+            
+            function renameCurrentNote() {
+                const newTitle = prompt('Enter a new name for this note:', notes[currentNoteIndex].title);
+                if (!newTitle) return;
+                
+                notes[currentNoteIndex].title = newTitle;
+                localStorage.setItem('productivityDashboardNotes', JSON.stringify(notes));
+                updateNoteTabs();
+            }
+            
+            function loadNotes() {
+                const saved = localStorage.getItem('productivityDashboardNotes');
+                if (saved) {
+                    notes = JSON.parse(saved);
+                } else {
+                    notes = [{ title: 'Note 1', content: '' }];
+                }
+                
+                updateNoteTabs();
+                textarea.value = notes[currentNoteIndex].content;
+            }
+            
+            // Add event listeners
+            addNoteBtn.addEventListener('click', addNewNote);
+            
+            saveIcon.addEventListener('click', () => {
+                saveCurrentNote();
+                // Show brief saved indicator
+                saveIcon.className = 'fas fa-check';
+                setTimeout(() => {
+                    saveIcon.className = 'fas fa-save';
+                }, 1000);
+            });
+            
+            // Auto-save when typing stops
+            let typingTimer;
+            textarea.addEventListener('input', () => {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(saveCurrentNote, 1000);
+            });
+            
+            // Initialize
+            loadNotes();
+            
+            // Expose function for initial load
+            window.loadNotes = loadNotes;
+        }
+        
+        // Water Tracker
+        function initWaterTracker() {
+            const waterFill = document.querySelector('.water-fill');
+            const waterText = document.querySelector('.water-text');
+            const addBtn = document.getElementById('add-water');
+            const resetBtn = document.getElementById('reset-water');
+            
+            const target = 8; // 8 glasses per day
+            let current = 0;
+            
+            function updateWaterDisplay() {
+                const percentage = Math.min((current / target) * 100, 100);
+                waterFill.style.height = `${percentage}%`;
+                waterText.textContent = `${current}/${target}`;
+                
+                // Save to storage
+                localStorage.setItem('productivityDashboardWater', current);
+            }
+            
+            function addWater() {
+                if (current < target) {
+                    current++;
+                    updateWaterDisplay();
+                }
+            }
+            
+            function resetWater() {
+                current = 0;
+                updateWaterDisplay();
+            }
+            
+            function loadWater() {
+                const saved = localStorage.getItem('productivityDashboardWater');
+                if (saved !== null) {
+                    current = parseInt(saved);
+                    updateWaterDisplay();
+                }
+            }
+            
+            addBtn.addEventListener('click', addWater);
+            resetBtn.addEventListener('click', resetWater);
+            
+            // Expose function for initial load
+            window.loadWater = loadWater;
+        }
+        
+        // Calendar/Agenda
+        function initAgenda() {
+            const currentDateEl = document.getElementById('current-date');
+            const prevBtn = document.getElementById('prev-day');
+            const nextBtn = document.getElementById('next-day');
+            const eventsList = document.querySelector('.events-list');
+            const addEventBtn = document.getElementById('add-event-btn');
+            
+            let currentDate = new Date();
+            
+            function formatDate(date) {
+                const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            function updateDateDisplay() {
+                currentDateEl.textContent = formatDate(currentDate);
+                loadEventsForDate();
+            }
+            
+            function prevDay() {
+                currentDate.setDate(currentDate.getDate() - 1);
+                updateDateDisplay();
+            }
+            
+            function nextDay() {
+                currentDate.setDate(currentDate.getDate() + 1);
+                updateDateDisplay();
+            }
+            
+            function getDateKey(date) {
+                return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            }
+            
+            function loadEventsForDate() {
+                const dateKey = getDateKey(currentDate);
+                const saved = localStorage.getItem('productivityDashboardEvents');
+                
+                eventsList.innerHTML = '';
+                
+                if (saved) {
+                    const allEvents = JSON.parse(saved);
+                    const events = allEvents[dateKey] || [];
+                    
+                    if (events.length === 0) {
+                        const emptyMsg = document.createElement('li');
+                        emptyMsg.textContent = 'No events for today';
+                        emptyMsg.style.textAlign = 'center';
+                        emptyMsg.style.padding = '10px';
+                        emptyMsg.style.color = '#999';
+                        eventsList.appendChild(emptyMsg);
+                    } else {
+                        events.sort((a, b) => {
+                            const timeA = a.time.split(':').map(Number);
+                            const timeB = b.time.split(':').map(Number);
+                            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+                        }).forEach(event => {
+                            const li = document.createElement('li');
+                            li.className = 'event-item';
+                            
+                            const timeDiv = document.createElement('div');
+                            timeDiv.className = 'event-time';
+                            timeDiv.textContent = event.time;
+                            
+                            const titleDiv = document.createElement('div');
+                            titleDiv.className = 'event-title';
+                            titleDiv.textContent = event.title;
+                            
+                            li.appendChild(timeDiv);
+                            li.appendChild(titleDiv);
+                            
+                            // Add delete button
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            deleteBtn.style.float = 'right';
+                            deleteBtn.style.background = 'none';
+                            deleteBtn.style.border = 'none';
+                            deleteBtn.style.cursor = 'pointer';
+                            deleteBtn.style.color = '#999';
+                            
+                            deleteBtn.addEventListener('click', () => {
+                                if (confirm('Delete this event?')) {
+                                    const eventIndex = events.findIndex(e => 
+                                        e.time === event.time && e.title === event.title);
+                                    
+                                    if (eventIndex !== -1) {
+                                        events.splice(eventIndex, 1);
+                                        allEvents[dateKey] = events;
+                                        localStorage.setItem('productivityDashboardEvents', JSON.stringify(allEvents));
+                                        loadEventsForDate();
+                                    }
+                                }
+                            });
+                            
+                            li.appendChild(deleteBtn);
+                            eventsList.appendChild(li);
+                        });
+                    }
+                } else {
+                    const emptyMsg = document.createElement('li');
+                    emptyMsg.textContent = 'No events for today';
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.style.padding = '10px';
+                    emptyMsg.style.color = '#999';
+                    eventsList.appendChild(emptyMsg);
+                }
+            }
+            
+            function addEvent() {
+                const title = prompt('Event title:');
+                if (!title || title.trim() === '') return;
+                
+                let time = prompt('Event time (HH:MM):', '09:00');
+                // Basic validation for time format
+                if (!time || !/^\d{1,2}:\d{2}$/.test(time)) {
+                    alert('Please use format HH:MM (e.g. 09:00)');
+                    return;
+                }
+                
+                // Pad hour with leading zero if needed
+                const [hour, minute] = time.split(':');
+                time = `${hour.padStart(2, '0')}:${minute}`;
+                
+                const dateKey = getDateKey(currentDate);
+                const saved = localStorage.getItem('productivityDashboardEvents');
+                
+                let allEvents = {};
+                if (saved) {
+                    allEvents = JSON.parse(saved);
+                }
+                
+                if (!allEvents[dateKey]) {
+                    allEvents[dateKey] = [];
+                }
+                
+                allEvents[dateKey].push({ title, time });
+                localStorage.setItem('productivityDashboardEvents', JSON.stringify(allEvents));
+                
+                loadEventsForDate();
+            }
+            
+            prevBtn.addEventListener('click', prevDay);
+            nextBtn.addEventListener('click', nextDay);
+            addEventBtn.addEventListener('click', addEvent);
+            
+            // Initialize with current date
+            updateDateDisplay();
+            
+            // Expose function for initial load
+            window.loadAgenda = updateDateDisplay;
+        }
+
+        // Bookmarks
+        function initBookmarks() {
+            const bookmarksContainer = document.createElement('div');
+            bookmarksContainer.className = 'bookmarks-container';
+            
+            const bookmarksScroll = document.createElement('div');
+            bookmarksScroll.className = 'bookmarks-scroll';
+            
+            bookmarksContainer.appendChild(bookmarksScroll);
+            document.body.appendChild(bookmarksContainer);
+            
+            // Default bookmarks - empty array
+            const defaultBookmarks = [];
+            
+            function createBookmarkElement(bookmark) {
+                const bookmarkItem = document.createElement('a');
+                bookmarkItem.className = 'bookmark-item';
+                bookmarkItem.href = bookmark.url;
+                bookmarkItem.target = '_blank';
+                
+                const iconContainer = document.createElement('div');
+                iconContainer.className = 'bookmark-icon';
+                
+                const icon = document.createElement('img');
+                icon.src = bookmark.favicon;
+                icon.alt = bookmark.title;
+                icon.onerror = function() {
+                    // If favicon fails to load, show first letter of the title
+                    this.style.display = 'none';
+                    iconContainer.textContent = bookmark.title.charAt(0).toUpperCase();
+                    iconContainer.style.backgroundColor = getRandomColor(bookmark.title);
+                    iconContainer.style.color = 'white';
+                    iconContainer.style.fontWeight = 'bold';
+                    iconContainer.style.fontSize = '20px';
+                };
+                
+                const title = document.createElement('div');
+                title.className = 'bookmark-title';
+                title.textContent = bookmark.title;
+                
+                iconContainer.appendChild(icon);
+                bookmarkItem.appendChild(iconContainer);
+                bookmarkItem.appendChild(title);
+                
+                return bookmarkItem;
+            }
+            
+            function getRandomColor(str) {
+                // Generate consistent color based on the string
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                
+                const colors = [
+                    '#4285F4', '#EA4335', '#FBBC05', '#34A853', // Google colors
+                    '#1877F2', '#E4405F', '#1DA1F2', '#0A66C2', // Social media blues
+                    '#FF9900', '#7B1FA2', '#0288D1', '#388E3C', // Material colors
+                ];
+                
+                return colors[Math.abs(hash) % colors.length];
+            }
+            
+            function loadBookmarks() {
+                const saved = localStorage.getItem('productivityDashboardBookmarks');
+                let bookmarks = saved ? JSON.parse(saved) : defaultBookmarks;
+                
+                bookmarksScroll.innerHTML = '';
+                
+                bookmarks.forEach(bookmark => {
+                    const element = createBookmarkElement(bookmark);
+                    bookmarksScroll.appendChild(element);
+                });
+                
+                // Add "Add" button
+                const addButton = document.createElement('div');
+                addButton.className = 'add-bookmark';
+                
+                const addIconContainer = document.createElement('div');
+                addIconContainer.className = 'add-bookmark-icon';
+                addIconContainer.innerHTML = '<i class="fas fa-plus"></i>';
+                
+                const addText = document.createElement('div');
+                addText.className = 'bookmark-title';
+                addText.textContent = 'Add New';
+                
+                addButton.appendChild(addIconContainer);
+                addButton.appendChild(addText);
+                
+                addButton.addEventListener('click', () => {
+                    addNewBookmark();
+                });
+                
+                bookmarksScroll.appendChild(addButton);
+            }
+            
+            function addNewBookmark() {
+                const url = prompt('Enter website URL (include https://)', 'https://');
+                if (!url || !url.startsWith('http')) {
+                    alert('Please enter a valid URL starting with https://');
+                    return;
+                }
+                
+                try {
+                    // Validate URL
+                    new URL(url);
+                } catch (e) {
+                    alert('Please enter a valid URL');
+                    return;
+                }
+                
+                let title = prompt('Enter a name for this bookmark:', new URL(url).hostname.replace('www.', ''));
+                if (!title) title = new URL(url).hostname;
+                
+                // Try to get favicon from Google's favicon service for better reliability
+                const favicon = `https://www.google.com/s2/favicons?domain=${url}&sz=64`;
+                
+                const newBookmark = { url, title, favicon };
+                
+                const saved = localStorage.getItem('productivityDashboardBookmarks');
+                let bookmarks = saved ? JSON.parse(saved) : [];
+                
+                bookmarks.push(newBookmark);
+                localStorage.setItem('productivityDashboardBookmarks', JSON.stringify(bookmarks));
+                
+                loadBookmarks();
+            }
+            
+            loadBookmarks();
+            
+            // Expose function for initial load
+            window.loadBookmarks = loadBookmarks;
+        }
+        
+        // Load all saved data on startup
+        function loadStoredData() {
+            if (window.loadTasksFromStorage) window.loadTasksFromStorage();
+            if (window.loadNotes) window.loadNotes();
+            if (window.loadWater) window.loadWater();
+            if (window.loadAgenda) window.loadAgenda();
+            
+            // Initialize bookmarks
+            initBookmarks();
+        }
+// Add Dashboard Controls to the top of the dashboard
+function addDashboardControls() {
+    const dashboard = document.querySelector('.dashboard');
+    const controlsContainer = document.createElement('div');
+    controlsContainer.className = 'widget dashboard-controls';
+    controlsContainer.style.gridColumn = '1 / -1'; // Span all columns
+    
+    const widgetHeader = document.createElement('div');
+    widgetHeader.className = 'widget-header';
+    
+    const title = document.createElement('h2');
+    title.className = 'widget-title';
+    title.textContent = 'Dashboard Controls';
+    
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'dashboard-buttons';
+    controlsDiv.style.display = 'flex';
+    controlsDiv.style.justifyContent = 'center';
+    controlsDiv.style.gap = '15px';
+    controlsDiv.style.margin = '10px 0';
+    
+    // Create Reset Day button
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'dashboard-btn reset-day-btn';
+    resetBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Reset Day';
+    resetBtn.style.backgroundColor = 'var(--danger)';
+    resetBtn.style.color = 'white';
+    resetBtn.style.border = 'none';
+    resetBtn.style.borderRadius = '4px';
+    resetBtn.style.padding = '10px 15px';
+    resetBtn.style.cursor = 'pointer';
+    resetBtn.style.fontWeight = '600';
+    
+    // Create Download Day button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'dashboard-btn download-day-btn';
+    downloadBtn.innerHTML = '<i class="fas fa-file-download"></i> Download Day';
+    downloadBtn.style.backgroundColor = 'var(--primary)';
+    downloadBtn.style.color = 'white';
+    downloadBtn.style.border = 'none';
+    downloadBtn.style.borderRadius = '4px';
+    downloadBtn.style.padding = '10px 15px';
+    downloadBtn.style.cursor = 'pointer';
+    downloadBtn.style.fontWeight = '600';
+    
+    // Add event listeners
+    resetBtn.addEventListener('click', resetDayData);
+    downloadBtn.addEventListener('click', downloadDaySummary);
+    
+    // Assemble the controls
+    widgetHeader.appendChild(title);
+    controlsContainer.appendChild(widgetHeader);
+    controlsDiv.appendChild(resetBtn);
+    controlsDiv.appendChild(downloadBtn);
+    controlsContainer.appendChild(controlsDiv);
+    
+    // Insert at the top of the dashboard
+    dashboard.insertBefore(controlsContainer, dashboard.firstChild);
+}
+
+// Reset all daily data
+function resetDayData() {
+    if (confirm('Are you sure you want to reset all today\'s data? This cannot be undone.')) {
+        // Reset tasks
+        const taskList = document.querySelector('.task-list');
+        taskList.innerHTML = '';
+        localStorage.setItem('productivityDashboardTasks', JSON.stringify([]));
+        
+        // Reset pomodoro timer
+        const timerDisplay = document.querySelector('.timer-display');
+        const activeMode = document.querySelector('.mode-btn.active');
+        const minutes = parseInt(activeMode.dataset.minutes);
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:00`;
+        
+        // Reset water tracker
+        const waterFill = document.querySelector('.water-fill');
+        const waterText = document.querySelector('.water-text');
+        waterFill.style.height = '0%';
+        waterText.textContent = '0/8';
+        localStorage.setItem('productivityDashboardWater', '0');
+        
+        // Reset today's events
+        const currentDate = new Date();
+        const dateKey = getDateKey(currentDate);
+        const saved = localStorage.getItem('productivityDashboardEvents');
+        if (saved) {
+            const allEvents = JSON.parse(saved);
+            allEvents[dateKey] = [];
+            localStorage.setItem('productivityDashboardEvents', JSON.stringify(allEvents));
+            if (window.loadAgenda) window.loadAgenda();
+        }
+        
+        // Reset notes
+        resetNotes();
+        
+        alert('Day has been reset successfully!');
+    }
+}
+
+// Helper function to get date key in the same format as the agenda
+function getDateKey(date) {
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+// Function to download a summary of the day as PDF
+function downloadDaySummary() {
+    // Load jsPDF library dynamically
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = function() {
+        generatePDF();
+    };
+    script.onerror = function() {
+        alert('Could not load PDF generation library. Please try again later.');
+    };
+    document.head.appendChild(script);
+}
+
+// Generate the PDF with daily summary
+function generatePDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // PDF title and date
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    doc.setFontSize(22);
+    doc.text('Daily Report', 105, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(dateStr, 105, 30, { align: 'center' });
+    
+    let yPosition = 45;
+    
+    // Add Tasks section
+    doc.setFontSize(16);
+    doc.text('Tasks', 20, yPosition);
+    yPosition += 10;
+    
+    const tasks = [];
+    document.querySelectorAll('.task-item').forEach(item => {
+        const text = item.querySelector('.task-text').textContent;
+        const completed = item.querySelector('.task-checkbox').checked;
+        tasks.push({ text, completed });
+    });
+    
+    if (tasks.length === 0) {
+        doc.setFontSize(12);
+        doc.text('No tasks for today', 25, yPosition);
+        yPosition += 10;
+    } else {
+        doc.setFontSize(12);
+        tasks.forEach(task => {
+            const status = task.completed ? '[✓]' : '[ ]';
+            const text = `${status} ${task.text}`;
+            
+            // Check if we need a new page
+            if (yPosition > 270) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            doc.text(text, 25, yPosition);
+            yPosition += 7;
+        });
+    }
+    
+    yPosition += 10;
+    
+    // Add Water Tracker section
+    doc.setFontSize(16);
+    doc.text('Water Intake', 20, yPosition);
+    yPosition += 10;
+    
+    const waterCount = localStorage.getItem('productivityDashboardWater') || '0';
+    doc.setFontSize(12);
+    doc.text(`Glasses of water: ${waterCount}/8`, 25, yPosition);
+    yPosition += 15;
+    
+    // Add Events section
+    doc.setFontSize(16);
+    doc.text('Today\'s Events', 20, yPosition);
+    yPosition += 10;
+    
+    const dateKey = getDateKey(today);
+    const saved = localStorage.getItem('productivityDashboardEvents');
+    let events = [];
+    
+    if (saved) {
+        const allEvents = JSON.parse(saved);
+        events = allEvents[dateKey] || [];
+    }
+    
+    if (events.length === 0) {
+        doc.setFontSize(12);
+        doc.text('No events scheduled for today', 25, yPosition);
+        yPosition += 10;
+    } else {
+        doc.setFontSize(12);
+        events.sort((a, b) => {
+            const timeA = a.time.split(':').map(Number);
+            const timeB = b.time.split(':').map(Number);
+            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+        }).forEach(event => {
+            // Check if we need a new page
+            if (yPosition > 270) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            doc.text(`${event.time} - ${event.title}`, 25, yPosition);
+            yPosition += 7;
+        });
+    }
+    
+    // Add Notes section - ensure all notes are included
+    doc.addPage(); // Start notes on a new page
+    yPosition = 20;
+    
+    doc.setFontSize(16);
+    doc.text('Notes', 20, yPosition);
+    yPosition += 10;
+    
+    // Get all notes from DOM to ensure we capture everything
+    // This is more reliable than using localStorage
+    const allNotes = [];
+    const noteTabs = document.querySelectorAll('.note-tab');
+    const notesTextarea = document.querySelector('.notes-textarea');
+    
+    // First save the currently displayed note
+    if (noteTabs.length > 0) {
+        const activeTab = document.querySelector('.note-tab.active');
+        if (activeTab) {
+            const activeTitle = activeTab.textContent.replace('×', '').trim();
+            allNotes.push({
+                title: activeTitle,
+                content: notesTextarea.value
+            });
+        }
+    }
+    
+    // Then get all other notes from localStorage
+    const savedNotes = localStorage.getItem('productivityDashboardNotes');
+    if (savedNotes) {
+        try {
+            const parsedNotes = JSON.parse(savedNotes);
+            
+            // Add all notes except the active one we already added
+            if (Array.isArray(parsedNotes)) {
+                parsedNotes.forEach(note => {
+                    // Skip if this is the active note (avoid duplicates)
+                    const isActiveNote = allNotes.length > 0 && 
+                                       allNotes[0].title === note.title;
+                    
+                    if (!isActiveNote) {
+                        allNotes.push(note);
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Error parsing notes from localStorage', e);
+        }
+    }
+    
+    if (allNotes.length === 0) {
+        doc.setFontSize(12);
+        doc.text('No notes available', 25, yPosition);
+    } else {
+        // Process each note
+        allNotes.forEach((note, index) => {
+            if (index > 0) {
+                // Start each new note on a fresh page
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            // Note title
+            doc.setFontSize(14);
+            doc.text(`Note: ${note.title}`, 25, yPosition);
+            yPosition += 10;
+            
+            // Note content
+            const notesContent = note.content || 'Empty note';
+            const lines = doc.splitTextToSize(notesContent, 170);
+            doc.setFontSize(12);
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                doc.text(lines[i], 25, yPosition);
+                yPosition += 7;
+            }
+        });
+    }
+    
+    // Footer with generation time
+    const timeStr = today.toLocaleTimeString();
+    doc.setFontSize(10);
+    
+    // Add footer to all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(`Generated on ${dateStr} at ${timeStr}`, 105, 285, { align: 'center' });
+        doc.text(`Page ${i} of ${pageCount}`, 105, 292, { align: 'center' });
+    }
+    
+    // Save the PDF
+    doc.save(`daily-report-${today.toISOString().split('T')[0]}.pdf`);
+}
+
+// Function to reset all notes
+function resetNotes() {
+    // Reset notes in localStorage
+    localStorage.setItem('productivityDashboardNotes', JSON.stringify([{title: 'Note 1', content: ''}]));
+    
+    // Update UI
+    const notesTextarea = document.querySelector('.notes-textarea');
+    if (notesTextarea) {
+        notesTextarea.value = '';
+    }
+    
+    // Reset tabs
+    const notesTabs = document.querySelector('.notes-tabs');
+    if (notesTabs) {
+        notesTabs.innerHTML = '';
+        
+        // Create default tab
+        const defaultTab = document.createElement('div');
+        defaultTab.className = 'note-tab active';
+        defaultTab.dataset.index = 0;
+        defaultTab.textContent = 'Note 1';
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'note-tab-close';
+        closeBtn.innerHTML = '×';
+        defaultTab.appendChild(closeBtn);
+        
+        notesTabs.appendChild(defaultTab);
+    }
+    
+    // If the loadNotes function exists in window, call it to refresh the notes interface
+    if (window.loadNotes) {
+        window.loadNotes();
+    }
+}
+
+// Enhanced Notes functionality - Fix the ability to edit note titles
+function enhanceNotesWidget() {
+    // Find the notes widget
+    const notesWidget = document.getElementById('notes');
+    if (!notesWidget) return; // Exit if widget doesn't exist
+    
+    // Add Edit Title button if it doesn't exist
+    if (!document.getElementById('edit-note-title')) {
+        const widgetControls = notesWidget.querySelector('.widget-controls');
+        
+        // Add Edit Title button before any existing controls
+        const editTitleBtn = document.createElement('i');
+        editTitleBtn.className = 'fas fa-edit';
+        editTitleBtn.id = 'edit-note-title';
+        editTitleBtn.title = 'Edit Note Title';
+        editTitleBtn.style.marginRight = '8px';
+        editTitleBtn.style.cursor = 'pointer';
+        
+        widgetControls.insertBefore(editTitleBtn, widgetControls.firstChild);
+        
+        // Add click event to edit title
+        editTitleBtn.addEventListener('click', function() {
+            // Find the active note tab
+            const activeTab = document.querySelector('.note-tab.active');
+            if (!activeTab) return;
+            
+            // Get current title (remove the X button text)
+            const currentTitle = activeTab.textContent.replace('×', '').trim();
+            
+            // Prompt for new title
+            const newTitle = prompt('Enter a new name for this note:', currentTitle);
+            if (!newTitle || newTitle.trim() === '') return;
+            
+            // Update the tab text
+            activeTab.childNodes[0].nodeValue = newTitle;
+            
+            // Also update in localStorage to persist
+            const savedNotes = localStorage.getItem('productivityDashboardNotes');
+            if (savedNotes) {
+                try {
+                    const notes = JSON.parse(savedNotes);
+                    const index = parseInt(activeTab.dataset.index);
+                    
+                    if (!isNaN(index) && notes[index]) {
+                        notes[index].title = newTitle;
+                        localStorage.setItem('productivityDashboardNotes', JSON.stringify(notes));
+                    }
+                } catch (e) {
+                    console.error('Error updating note title', e);
+                }
+            }
+        });
+    }
+}
+
+// Initialize dashboard controls and enhancements when document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add dashboard controls
+    addDashboardControls();
+    
+    // Set a timeout to enhance the notes widget after it's fully initialized
+    setTimeout(enhanceNotesWidget, 1000);
+});
+
+// Add a direct observer to ensure the notes widget is enhanced even after dynamic changes
+const observeDOM = (function(){
+    const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+    
+    return function(obj, callback) {
+        if (!obj || obj.nodeType !== 1) return;
+        
+        if (MutationObserver) {
+            const mutationObserver = new MutationObserver(callback);
+            mutationObserver.observe(obj, { childList: true, subtree: true });
+            return mutationObserver;
+        } else {
+            // Fallback for older browsers
+            obj.addEventListener('DOMNodeInserted', callback, false);
+            obj.addEventListener('DOMNodeRemoved', callback, false);
+        }
+    };
+})();
+
+// Initialize observation after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Observe the dashboard for changes
+    const dashboard = document.querySelector('.dashboard');
+    if (dashboard) {
+        observeDOM(dashboard, function() {
+            // Check if notes widget exists but needs enhancement
+            const notesWidget = document.getElementById('notes');
+            if (notesWidget && !document.getElementById('edit-note-title')) {
+                enhanceNotesWidget();
+            }
+        });
+    }
+});
+    </script>
+</body>
+</html>
